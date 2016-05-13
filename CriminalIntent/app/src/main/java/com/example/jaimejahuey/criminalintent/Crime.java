@@ -1,12 +1,13 @@
 package com.example.jaimejahuey.criminalintent;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.UUID;
 
 /**
  * Created by jaimejahuey on 4/14/16.
  */
-public class Crime {
+public class Crime implements Serializable {
     private UUID mId;
     private String mTitle;
     private Date mDate;

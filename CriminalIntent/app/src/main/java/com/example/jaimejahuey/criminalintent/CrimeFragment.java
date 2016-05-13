@@ -1,9 +1,13 @@
 package com.example.jaimejahuey.criminalintent;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.text.Editable;
@@ -18,8 +22,10 @@ import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.UUID;
 
 /**
@@ -32,6 +38,7 @@ public class CrimeFragment extends Fragment {
     private Button mDateButton;
     private Button mTimeButton;
     private CheckBox mSolvedCheckbox;
+    private Button mDeleteButton;
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
@@ -63,8 +70,6 @@ public class CrimeFragment extends Fragment {
 //        UUID crimeId = (UUID) getActivity().getIntent().getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
-
-
     }
 
     @Override
@@ -93,6 +98,7 @@ public class CrimeFragment extends Fragment {
 
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
+        mDeleteButton = (Button) v.findViewById(R.id.crime_delete);
 
 //        mDateButton.setEnabled(false);
         mDateButton.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +122,16 @@ public class CrimeFragment extends Fragment {
 
                 dialog.setTargetFragment(CrimeFragment.this, REQUEST_TIME);
                 dialog.show(fm, "hi");
+            }
+        });
+
+        mDeleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FragmentManager fm = getActivity().getSupportFragmentManager();
+                SimpleDialog dialog = new SimpleDialog().newInstance(mCrime);
+
+                dialog.show(fm, "dialog");
             }
         });
 
@@ -188,6 +204,42 @@ public class CrimeFragment extends Fragment {
 
         SimpleDateFormat formatter = new SimpleDateFormat(hour + min + sec);
         mTimeButton.setText(formatter.format(mCrime.getmDate().getTime()));
+
+    }
+
+    //For deleting a crime
+    public static class SimpleDialog extends DialogFragment {
+
+        Crime crimeDelete;
+
+        public static SimpleDialog newInstance(Crime c) {
+
+            Bundle args = new Bundle();
+            args.putSerializable("Crime", c);
+
+            SimpleDialog fragment = new SimpleDialog();
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+
+            crimeDelete  = (Crime) getArguments().getSerializable("Crime");
+
+            return new AlertDialog.Builder(getActivity())
+                    .setMessage("Are you sure?").setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                            CrimeLab crimes = CrimeLab.get(getActivity());
+                            crimes.deleteCrime(crimeDelete.getmId());
+                            getActivity().finish();
+
+                        }
+                    })
+                    .setNegativeButton("No", null).create();
+        }
 
     }
 }

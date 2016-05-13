@@ -3,6 +3,7 @@ package com.example.jaimejahuey.criminalintent;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -58,4 +59,16 @@ public class CrimeLab {
     public void addCrime(Crime c){
         mCrimes.add(c);
     }
+
+    public void deleteCrime(UUID id){
+
+        for(Iterator<Crime> i = mCrimes.listIterator(); i.hasNext(); ) {
+            Crime crime = i.next();
+            if(crime.getmId()==id) {
+                mCrimes.remove(crime);
+            }
+        }
+    }
+
+
 }
