@@ -14,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ public class CrimeListFragment extends Fragment{
 
     private RecyclerView mCrimeRecyclerView;
     private static int itemChange = 0;
+    TextView textView;
 
     private CrimeAdapter mAdapter;
 
@@ -42,12 +44,9 @@ public class CrimeListFragment extends Fragment{
         //third parameter is false since we are adding the view in the code
         //second param is the parent
         View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
+        textView = (TextView) view.findViewById(R.id.crime_list_textview);
 
-        if(CrimeLab.get(getActivity()).getCrimes().size()==0){
-            TextView textView = new TextView(getActivity());
-
-            view.add
-        }
+        emptyView(textView);
 
         //LinearLayoutManger is required, or a type of setLayoutManger
         //It will arrange the items in a vertical list
@@ -69,6 +68,23 @@ public class CrimeListFragment extends Fragment{
         super.onSaveInstanceState(outState);
         outState.putBoolean(SAVED_SUBUTITLE_VISIBLE, mSubtitleVisible);
     }
+
+    public void emptyView(TextView textView){
+
+        if(CrimeLab.get(getActivity()).getCrimes().size()==0){
+            textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+            textView.setText("Add Crime");
+            textView.setTextSize(Float.parseFloat("20"));
+        }
+        else {
+            textView.setText("");
+            textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        }
+    }
+
     private void updateUI(){
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         List<Crime> crimes = crimeLab.getCrimes();
@@ -152,6 +168,7 @@ public class CrimeListFragment extends Fragment{
     @Override
     public void onResume(){
         super.onResume();
+        emptyView(textView);
         updateUI();
     }
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
