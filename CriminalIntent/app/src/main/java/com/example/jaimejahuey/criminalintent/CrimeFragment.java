@@ -56,15 +56,12 @@ public class CrimeFragment extends Fragment {
         CrimeFragment fragment = new CrimeFragment();
         fragment.setArguments(args);
 
-        Log.v("Happens in newInstance", "1");
         return fragment;
     }
 
     @Override
     public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.v("after newIstance", "2");
 
 //        mCrime = new Crime();
 //        UUID crimeId = (UUID) getActivity().getIntent().getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID);
@@ -168,8 +165,6 @@ public class CrimeFragment extends Fragment {
             Date date = (Date)data.getSerializableExtra(TimePickerFragment.EXTRA_TIME);
 
             mCrime.setmDate(date);
-
-            Log.v("here", "time");
             updateTime();
         }
     }
@@ -189,9 +184,6 @@ public class CrimeFragment extends Fragment {
         {
             sec = "0s";
         }
-        Log.v("Hours", " " + mCrime.getmDate().getHours());
-        Log.v("Hoursmins", " " + mCrime.getmDate().getMinutes());
-        Log.v("Hourssec", " " + mCrime.getmDate().getMinutes());
 
         if(mCrime.getmDate().getHours()>12)
         {
@@ -241,5 +233,13 @@ public class CrimeFragment extends Fragment {
                     .setNegativeButton("No", null).create();
         }
 
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+
+        //Udates the crime in the DB
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
     }
 }

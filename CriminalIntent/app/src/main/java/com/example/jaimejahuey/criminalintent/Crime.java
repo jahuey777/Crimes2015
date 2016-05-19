@@ -15,10 +15,16 @@ public class Crime implements Serializable {
 
     public Crime(){
         //Generate unique identifier
-        mId = UUID.randomUUID();
-        mDate = new Date();
+//        mId = UUID.randomUUID();
+//        mDate = new Date();
+        //Calls the other constructior
+        this(UUID.randomUUID());
     }
 
+    public Crime(UUID id){
+        mId = id;
+        mDate = new Date();
+    }
     public UUID getmId() {
         return mId;
     }

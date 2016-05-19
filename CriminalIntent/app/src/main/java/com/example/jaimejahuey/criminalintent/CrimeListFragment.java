@@ -90,12 +90,17 @@ public class CrimeListFragment extends Fragment{
         List<Crime> crimes = crimeLab.getCrimes();
 
         if(mAdapter==null){
+
+            Log.v("Size recreated ", " " + crimes.size());
+
             mAdapter = new CrimeAdapter(crimes);
             //Giving the recyclerView the crimes to display
             mCrimeRecyclerView.setAdapter(mAdapter);
         }
-        else
-        mAdapter.notifyDataSetChanged();
+        else{
+            mAdapter.setmCrimes(crimes);
+            mAdapter.notifyDataSetChanged();
+        }
 //            mAdapter.notifyItemChanged(itemChange);
 
         //Will update the subtitle in Onresume and onCreate
@@ -240,6 +245,12 @@ public class CrimeListFragment extends Fragment{
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        //Sets the crimes whenever the user presses back.
+        //If they press up then the activity is reacreated along with the adapter
+        public void setmCrimes(List<Crime> crimes){
+            mCrimes = crimes;
         }
     }
 }
