@@ -68,7 +68,6 @@ public class DatePickerFragment extends android.support.v4.app.DialogFragment {
 //                .setPositiveButton(android.R.string.ok, null).create();
     }
 
-
     private void sendResult(int resultCode, Date date){
 
         if(getTargetFragment()==null) {

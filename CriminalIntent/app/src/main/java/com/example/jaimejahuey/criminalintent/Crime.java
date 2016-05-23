@@ -13,6 +13,8 @@ public class Crime implements Serializable {
     private Date mDate;
     private boolean mSolved;
 
+    private String mSuspect;
+
     public Crime(){
         //Generate unique identifier
 //        mId = UUID.randomUUID();
@@ -20,7 +22,6 @@ public class Crime implements Serializable {
         //Calls the other constructior
         this(UUID.randomUUID());
     }
-
     public Crime(UUID id){
         mId = id;
         mDate = new Date();
@@ -55,5 +56,13 @@ public class Crime implements Serializable {
 
     public void setmSolved(boolean mSolved) {
         this.mSolved = mSolved;
+    }
+
+    public String getmSuspect() {
+        return mSuspect;
+    }
+
+    public void setmSuspect(String mSuspect) {
+        this.mSuspect = mSuspect;
     }
 }

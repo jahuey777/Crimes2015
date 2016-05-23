@@ -14,6 +14,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -23,6 +26,7 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -39,13 +43,15 @@ public class CrimeFragment extends Fragment {
     private Button mTimeButton;
     private CheckBox mSolvedCheckbox;
     private Button mDeleteButton;
+    private Button mReportButton;
+    private Button mSuspectButton;
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
 
     public static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
-
+    private static final int REQUEST_CONTACT = 2;
 
     //This is what CrimeActivity calls.
     //The Bundles is done before the onCreate is called, we put here and get in onCreate
@@ -62,6 +68,7 @@ public class CrimeFragment extends Fragment {
     @Override
     public void onCreate( Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
 
 //        mCrime = new Crime();
 //        UUID crimeId = (UUID) getActivity().getIntent().getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID);
@@ -81,12 +88,10 @@ public class CrimeFragment extends Fragment {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
             }
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 mCrime.setmTitle(s.toString());
             }
-
             @Override
             public void afterTextChanged(Editable s) {
 
@@ -96,6 +101,7 @@ public class CrimeFragment extends Fragment {
         mDateButton = (Button) v.findViewById(R.id.crime_date);
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
         mDeleteButton = (Button) v.findViewById(R.id.crime_delete);
+        mReportButton = (Button) v.findViewById(R.id.crime_report);
 
 //        mDateButton.setEnabled(false);
         mDateButton.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +138,21 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        mReportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(Intent.ACTION_SEND);
+                i.setType("text/plain");
+                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+
+                //give the user a list of apps to choose from.
+                i = Intent.createChooser(i, getString(R.string.send_report));
+
+                startActivity(i);
+            }
+        });
+
         //Formatting the date
         UpdateDate();
         updateTime();
@@ -147,6 +168,27 @@ public class CrimeFragment extends Fragment {
 
         return v;
     }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
+        super.onCreateOptionsMenu(menu, inflater);
+
+        inflater.inflate(R.menu.fragment_crime, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item){
+
+        switch (item.getItemId()){
+            case R.id.menu_item_delete_crime:
+                FragmentManager fm = getActivity().getSupportFragmentManager();
+                SimpleDialog dialog = new SimpleDialog().newInstance(mCrime);
+
+                dialog.show(fm, "dialog");
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
@@ -161,7 +203,6 @@ public class CrimeFragment extends Fragment {
             UpdateDate();
         }
         else if (requestCode==REQUEST_TIME) {
-
             Date date = (Date)data.getSerializableExtra(TimePickerFragment.EXTRA_TIME);
 
             mCrime.setmDate(date);
@@ -180,23 +221,19 @@ public class CrimeFragment extends Fragment {
         String hour = "h:";
         String sec = "s";
 
-        if(mCrime.getmDate().getSeconds()<10)
-        {
+        if(mCrime.getmDate().getSeconds()<10) {
             sec = "0s";
         }
 
-        if(mCrime.getmDate().getHours()>12)
-        {
+        if(mCrime.getmDate().getHours()>12) {
             hour = "0h:";
         }
-        if(mCrime.getmDate().getMinutes()<10)
-        {
+        if(mCrime.getmDate().getMinutes()<10) {
             min = "0m:";
         }
 
         SimpleDateFormat formatter = new SimpleDateFormat(hour + min + sec);
         mTimeButton.setText(formatter.format(mCrime.getmDate().getTime()));
-
     }
 
     //For deleting a crime
@@ -205,7 +242,6 @@ public class CrimeFragment extends Fragment {
         Crime crimeDelete;
 
         public static SimpleDialog newInstance(Crime c) {
-
             Bundle args = new Bundle();
             args.putSerializable("Crime", c);
 
@@ -216,7 +252,6 @@ public class CrimeFragment extends Fragment {
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
-
             crimeDelete  = (Crime) getArguments().getSerializable("Crime");
 
             return new AlertDialog.Builder(getActivity())
@@ -232,7 +267,6 @@ public class CrimeFragment extends Fragment {
                     })
                     .setNegativeButton("No", null).create();
         }
-
     }
 
     @Override
@@ -241,5 +275,29 @@ public class CrimeFragment extends Fragment {
 
         //Udates the crime in the DB
         CrimeLab.get(getActivity()).updateCrime(mCrime);
+    }
+
+    public String getCrimeReport(){
+        String solvedString = null;
+
+        if(mCrime.ismSolved()){
+            solvedString = getString(R.string.crime_report_solved);
+        }else{
+            solvedString = getString(R.string.crime_report_unsolved);
+        }
+
+        String dateFormat = "EEE, MMM dd";
+        String dateString = android.text.format.DateFormat.format(dateFormat, mCrime.getmDate()).toString();
+
+        String suspect = mCrime.getmSuspect();
+        if(suspect==null) {
+            suspect = getString(R.string.crime_report_no_suspect);
+        } else{
+            suspect = getString(R.string.crime_report_suspect, suspect);
+        }
+
+        String report = getString(R.string.crime_report, mCrime.getmTitle(), dateString, solvedString, suspect);
+
+        return report;
     }
 }

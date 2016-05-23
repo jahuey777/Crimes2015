@@ -109,6 +109,7 @@ public class CrimeLab {
 //                mCrimes.remove(crime);
 //            }
 //        }
+        mDatabase.delete(CrimeTable.NAME, CrimeTable.Cols.UUID + " =?",new String[]{String.valueOf(id.toString())});
     }
 
     private static ContentValues getContentValues(Crime crime){
@@ -117,6 +118,7 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.TITLE, crime.getmTitle());
         values.put(CrimeTable.Cols.DATE, crime.getmDate().getTime());
         values.put(CrimeTable.Cols.SOLVED, crime.ismSolved());
+        values.put(CrimeTable.Cols.SUSPECT, crime.getmSuspect());
 
         return values;
     }
@@ -131,8 +133,6 @@ public class CrimeLab {
 
 //    private Cursor queryCrimes(String whereClause, String[] whereArgs)
     private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs){
-
-
         Cursor cursor = mDatabase.query(
                 CrimeTable.NAME,
                 null, //Columns- null selects all columns
@@ -144,6 +144,4 @@ public class CrimeLab {
         );
         return new CrimeCursorWrapper(cursor);
     }
-
-
 }

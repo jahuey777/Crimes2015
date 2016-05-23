@@ -81,7 +81,6 @@ public class CrimeListFragment extends Fragment{
             textView.setText("");
             textView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT));
-
         }
     }
 
@@ -90,7 +89,6 @@ public class CrimeListFragment extends Fragment{
         List<Crime> crimes = crimeLab.getCrimes();
 
         if(mAdapter==null){
-
             Log.v("Size recreated ", " " + crimes.size());
 
             mAdapter = new CrimeAdapter(crimes);

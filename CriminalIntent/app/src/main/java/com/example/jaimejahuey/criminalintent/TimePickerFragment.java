@@ -33,7 +33,6 @@ public class TimePickerFragment extends android.support.v4.app.DialogFragment
         return fragment;
     }
 
-
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
@@ -94,6 +93,4 @@ public class TimePickerFragment extends android.support.v4.app.DialogFragment
 
         getTargetFragment().onActivityResult(getTargetRequestCode(), resultCode, i);
     }
-
-
 }
