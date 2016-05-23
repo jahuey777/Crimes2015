@@ -5,7 +5,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -102,6 +106,7 @@ public class CrimeFragment extends Fragment {
         mTimeButton = (Button) v.findViewById(R.id.crime_time);
         mDeleteButton = (Button) v.findViewById(R.id.crime_delete);
         mReportButton = (Button) v.findViewById(R.id.crime_report);
+        mSuspectButton = (Button) v.findViewById(R.id.crime_suspect);
 
 //        mDateButton.setEnabled(false);
         mDateButton.setOnClickListener(new View.OnClickListener() {
@@ -166,6 +171,28 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+
+        final Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+        mSuspectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(pickContact, REQUEST_CONTACT);
+            }
+        });
+
+        if(mCrime.getmSuspect() != null){
+            mSuspectButton.setText(mCrime.getmSuspect());
+        }
+
+        //Checking to make sure the user has some app to choose a suspect from. (Some type of
+        //COntact app
+        PackageManager packageManager = getActivity().getPackageManager();
+        //resolveactivy will try to match the intent, pickContact
+        if(packageManager.resolveActivity(pickContact, PackageManager.MATCH_DEFAULT_ONLY)==null){
+            mSuspectButton.setEnabled(false);
+        }
+
+
         return v;
     }
     @Override
@@ -207,6 +234,34 @@ public class CrimeFragment extends Fragment {
 
             mCrime.setmDate(date);
             updateTime();
+        }
+        else  if(requestCode == REQUEST_CONTACT && data!= null){
+            //The contact name we clicked on
+            Uri contactUri = data.getData();
+
+            //Specify which fields you want your query to return values for.
+            //Getting all of the contacts
+            String[] queryFields = new String[]{
+                    ContactsContract.Contacts.DISPLAY_NAME
+            };
+            //Perform your query - the contactURI is like a "where" clause here
+            //getting the contact we need.
+            Cursor c = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
+
+            try{
+                //DOuble check that we got the results
+                if(c.getCount()==0){
+                    return;
+                }
+                //Pull out the first column of the first row of data, which is the name
+                c.moveToFirst();
+                String suspect = c.getString(0);
+                mCrime.setmSuspect(suspect);
+                mSuspectButton.setText(suspect);
+            }finally {
+                c.close();
+            }
+
         }
     }
 
