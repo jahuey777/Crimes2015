@@ -14,6 +14,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -49,6 +50,7 @@ public class CrimeFragment extends Fragment {
     private Button mDeleteButton;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallSuspectButon;
 
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
@@ -56,6 +58,7 @@ public class CrimeFragment extends Fragment {
     public static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
+    private static final int REQUEST_CALL = 3;
 
     //This is what CrimeActivity calls.
     //The Bundles is done before the onCreate is called, we put here and get in onCreate
@@ -107,6 +110,7 @@ public class CrimeFragment extends Fragment {
         mDeleteButton = (Button) v.findViewById(R.id.crime_delete);
         mReportButton = (Button) v.findViewById(R.id.crime_report);
         mSuspectButton = (Button) v.findViewById(R.id.crime_suspect);
+        mCallSuspectButon = (Button) v.findViewById(R.id.crime_call);
 
 //        mDateButton.setEnabled(false);
         mDateButton.setOnClickListener(new View.OnClickListener() {
@@ -146,15 +150,19 @@ public class CrimeFragment extends Fragment {
         mReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("text/plain");
-                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
-                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+//                Intent i = new Intent(Intent.ACTION_SEND);
+//                i.setType("text/plain");
+//                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+//                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+//
+//                //give the user a list of apps to choose from.
+//                i = Intent.createChooser(i, getString(R.string.send_report));
 
-                //give the user a list of apps to choose from.
-                i = Intent.createChooser(i, getString(R.string.send_report));
-
-                startActivity(i);
+                //Doest the same as the above
+                Intent intentBuilder =  ShareCompat.IntentBuilder.from(getActivity())
+                        .setType("text/plain").setText(getCrimeReport()).setSubject(getString(R.string.crime_report_subject)).
+                                setChooserTitle(getString(R.string.send_report)).createChooserIntent();
+                startActivity(intentBuilder);
             }
         });
 
@@ -172,6 +180,7 @@ public class CrimeFragment extends Fragment {
         });
 
 
+        //For the suspects.
         final Intent pickContact = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
         mSuspectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -182,6 +191,10 @@ public class CrimeFragment extends Fragment {
 
         if(mCrime.getmSuspect() != null){
             mSuspectButton.setText(mCrime.getmSuspect());
+            mCallSuspectButon.setEnabled(true);
+
+        }else {
+            mCallSuspectButon.setEnabled(false);
         }
 
         //Checking to make sure the user has some app to choose a suspect from. (Some type of
@@ -192,6 +205,12 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setEnabled(false);
         }
 
+        mCallSuspectButon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(pickContact, REQUEST_CALL);
+            }
+        });
 
         return v;
     }
@@ -258,10 +277,45 @@ public class CrimeFragment extends Fragment {
                 String suspect = c.getString(0);
                 mCrime.setmSuspect(suspect);
                 mSuspectButton.setText(suspect);
+                mCallSuspectButon.setEnabled(true);
             }finally {
                 c.close();
             }
+        }
+        else if(requestCode==REQUEST_CALL && data!=null){
+            //Just like the request name, we get the id first and then the contact number
+            Uri contactUri = data.getData();
 
+            String [] queryFields = new String[]{ContactsContract.Contacts._ID};
+
+            Cursor c = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
+
+            try{
+                //DOuble check that we got the results
+                if(c.getCount()==0){
+                    return;
+                }
+                //Pull out the first column of the first row of data, which is the ID
+                c.moveToFirst();
+                String suspectID = c.getString(0);
+                Log.v("SuspectID" , " " + suspectID);
+
+                String contactNumber = null;
+                Cursor cursorPhone = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{suspectID}, null);
+
+                if(cursorPhone.moveToFirst()){
+                    contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                }
+
+                Log.v("Number" , " " + contactNumber);
+
+                cursorPhone.close();
+
+
+            }finally {
+                c.close();
+            }
         }
     }
 
