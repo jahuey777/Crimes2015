@@ -10,14 +10,12 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.ShareCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,14 +25,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.DatePicker;
 import android.widget.EditText;
 
-import java.io.Serializable;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.UUID;
 
 /**
@@ -208,7 +202,7 @@ public class CrimeFragment extends Fragment {
         mCallSuspectButon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivityForResult(pickContact, REQUEST_CALL);
+                getSuspectNumber();
             }
         });
 
@@ -282,41 +276,71 @@ public class CrimeFragment extends Fragment {
                 c.close();
             }
         }
-        else if(requestCode==REQUEST_CALL && data!=null){
-            //Just like the request name, we get the id first and then the contact number
-            Uri contactUri = data.getData();
+    }
 
-            String [] queryFields = new String[]{ContactsContract.Contacts._ID};
+    private String getSuspectNumber(){
 
-            Cursor c = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
+        //Pull out the first column of the first row of data, which is the ID
+        String suspectName = mCrime.getmSuspect();
 
-            try{
-                //DOuble check that we got the results
-                if(c.getCount()==0){
-                    return;
-                }
-                //Pull out the first column of the first row of data, which is the ID
-                c.moveToFirst();
-                String suspectID = c.getString(0);
-                Log.v("SuspectID" , " " + suspectID);
+        String contactNumber = null;
+        Cursor cursor = getActivity().getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, null,
+                    ContactsContract.Contacts.DISPLAY_NAME + " = ? ", new String[]{suspectName}, null);
 
-                String contactNumber = null;
-                Cursor cursorPhone = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
-                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?", new String[]{suspectID}, null);
+        if (cursor.moveToFirst()) {
+            String suspectID = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
 
-                if(cursorPhone.moveToFirst()){
-                    contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                }
+            //Getting all the phones for this contact
+            Cursor phones = getActivity().getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "= ?", new String[]{suspectID}, null);
+            //Grabbing all the numbers
+            String[] listOfPhoneType = new String[phones.getCount()];
+            String[] listOfPhoneNumbers = new String[phones.getCount()];
+            int index = 0;
+            while (phones.moveToNext()) {
+                listOfPhoneNumbers[index] = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                int type = phones.getInt(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
+                listOfPhoneType[index]= (String) ContactsContract.CommonDataKinds.Phone.getTypeLabel(getContext().getResources(), type, "");
 
-                Log.v("Number" , " " + contactNumber);
+                index++;
+//                switch (type) {
+//                    case ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE:
+//                        contactNumber = number;
+//                        Log.v("Hit case mobile ", contactNumber);
+//                        Log.v("Content type2 " ,  " " + phoneType);
+//                        break;
+//                    case ContactsContract.CommonDataKinds.Phone.TYPE_HOME:
+//                        contactNumber = number;
+//                        Log.v("Hit case home ", contactNumber);
+//                        Log.v("Content type " ,  " " + phoneType);
+//                        break;
+//                    case ContactsContract.CommonDataKinds.Phone.TYPE_WORK:
+//                        break;
+//                }
+            }
 
-                cursorPhone.close();
+            if(listOfPhoneNumbers.length>0 && listOfPhoneNumbers.length==1){
+                return contactNumber;
+            }
+            else{
+//                FragmentManager fragmentManager = getFragmentManager();
+//                FragmentTransaction ft = fragmentManager.beginTransaction();
+//
+//                PickPhoneFragment fragment = PickPhoneFragment.newInstance();
+//                ft.add(R.id.fragment_container, fragment);
+//                ft.addToBackStack(null);
+//
+//                ft.commit();
 
+                Intent i = new PickPhoneActivity().newIntent(getActivity(), listOfPhoneNumbers, listOfPhoneType);
+                startActivity(i);
 
-            }finally {
-                c.close();
+//                startActivity(new Intent(getActivity(), PickPhoneActivity.class));
+
             }
         }
+        cursor.close();
+        return contactNumber;
     }
 
     private void UpdateDate() {
