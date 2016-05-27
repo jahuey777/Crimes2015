@@ -65,4 +65,8 @@ public class Crime implements Serializable {
     public void setmSuspect(String mSuspect) {
         this.mSuspect = mSuspect;
     }
+
+    public String getPhotoFileName(){
+        return "IMG_" + getmId().toString() + ".jpg";
+    }
 }
