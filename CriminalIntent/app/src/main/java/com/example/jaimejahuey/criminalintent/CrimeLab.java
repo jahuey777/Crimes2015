@@ -147,6 +147,7 @@ public class CrimeLab {
         return new CrimeCursorWrapper(cursor);
     }
 
+    //Creating location for photo file
     public File getPhotoFile(Crime crime){
         File externalFilesDir = mcontext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 

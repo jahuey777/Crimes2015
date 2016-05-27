@@ -10,6 +10,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -29,6 +30,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
@@ -47,6 +49,7 @@ public class CrimeFragment extends Fragment {
     private Button mReportButton;
     private Button mSuspectButton;
     private Button mCallSuspectButon;
+    private File mPhotoFile;
 
     //For the photo
     private ImageButton mPhotoButton;
@@ -59,6 +62,7 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_CONTACT = 2;
     private static final int REQUEST_CALL = 3;
+    private static final int REQUEST_PHOTO = 4;
 
     //This is what CrimeActivity calls.
     //The Bundles is done before the onCreate is called, we put here and get in onCreate
@@ -81,6 +85,9 @@ public class CrimeFragment extends Fragment {
 //        UUID crimeId = (UUID) getActivity().getIntent().getSerializableExtra(CrimeActivity.EXTRA_CRIME_ID);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+
+        //Creating location for the photo
+        mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
     @Override
@@ -213,6 +220,29 @@ public class CrimeFragment extends Fragment {
         });
 
         mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        //Checking to see if we can take the photo.
+        //Check if the phone has a camera.
+        boolean canTakePhoto = mPhotoButton != null &&
+                               captureImage.resolveActivity(packageManager) != null;
+
+        if(canTakePhoto){
+
+            //Putting the image in the intent as an extra.
+            //So that its saved to the mPhotoFile location whenver the photo is taken.
+            Uri uri = Uri.fromFile(mPhotoFile);
+            captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        }
+
+        mPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
         mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
 
         return v;
